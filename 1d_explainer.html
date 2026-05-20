@@ -638,7 +638,7 @@
         <!-- Header -->
         <header>
             <span class="badge">Interactive Explainer</span>
-            <h1>Conformal Prediction Sandbox</h1>
+            <h1>Conformal Prediction 1-D Explainer</h1>
             <p class="subtitle">A visual, distribution-free simulation analyzing the mathematical boundary between <strong>Marginal</strong> and <strong>Conditional</strong> coverage.</p>
         </header>
 
@@ -646,7 +646,7 @@
         <div class="card">
             <div class="card-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                Parameters & Sandbox Metrics
+                Parameters & Explainer Metrics
             </div>
 
             <!-- Stats Dashboard -->
@@ -751,7 +751,7 @@
 
             <!-- Dynamic Mathematical Result Status -->
             <div class="status-callout">
-                <div class="status-title" id="statusHeader">Sandbox Status</div>
+                <div class="status-title" id="statusHeader">Explainer Status</div>
                 <div class="math-eqn" id="status">
                     $$\text{Waiting to run simulation...}$$
                 </div>
@@ -962,7 +962,7 @@
                     ? `$$Y_{n+1} \\le Y_{(${k})}\\quad\\text{— Covered (Inside interval)}$$`
                     : `$$Y_{n+1} > Y_{(${k})}\\quad\\text{— Uncovered (Missed outside)}$$`;
             } else {
-                statusHeader.innerText = "Sandbox Status";
+                statusHeader.innerText = "Explainer Status";
                 status.innerHTML = `$$\\text{Waiting to run simulation...}$$`;
             }
 
