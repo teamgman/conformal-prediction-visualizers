@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conformal Prediction: Marginal vs. Conditional Coverage</title>
+    
+    <!-- Modern Sans-Serif Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for rendering LaTeX formulas beautifully -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #f8fafc; /* Beautiful soft blue-gray background */
+            --card-bg: #ffffff;
+            --text-main: #0f172a; /* Slate 900 */
+            --text-secondary: #475569; /* Slate 600 */
+            --text-muted: #64748b; /* Slate 500 */
+            
+            --primary: #4f46e5; /* Indigo 600 - Calibration */
+            --primary-light: rgba(79, 70, 229, 0.1);
+            --success: #059669; /* Emerald 600 - Coverage Boundary */
+            --success-light: rgba(5, 150, 105, 0.08);
+            --accent: #f97316; /* Orange 500 - Test Sample */
+            --accent-light: rgba(249, 115, 22, 0.1);
+            
+            --border-color: #e2e8f0; /* Slate 200 */
+            --border-focus: #cbd5e1; /* Slate 300 */
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 840px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Explainer Header */
+        header {
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 700px;
+        }
+
+        /* Beautiful Clean Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* Stats Grid Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-focus);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .stat-val {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1;
+            margin: 0.25rem 0;
+        }
+
+        .stat-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Controls Area */
+        .controls-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .controls-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .control-num {
+            font-family: var(--font-mono);
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            outline: none;
+            accent-color: var(--primary);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* High-Fidelity Interactive Figure */
+        .figure-container {
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .number-line {
+            height: 6px;
+            background: #e2e8f0;
+            width: 100%;
+            position: relative;
+            border-radius: 9999px;
+            margin: 2rem 0;
+        }
+
+        .coverage-region {
+            position: absolute;
+            left: 0;
+            height: 6px;
+            top: 0;
+            background: var(--success-light);
+            border-right: 2px dashed var(--success);
+            border-radius: 9999px 0 0 9999px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Custom points along track */
+        .point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .point:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 100;
+        }
+
+        .point.calibration {
+            background: var(--primary);
+            border: 2px solid #ffffff;
+        }
+
+        .point.k-statistic {
+            background: var(--success);
+            border: 2.5px solid #ffffff;
+            width: 16px;
+            height: 16px;
+            box-shadow: 0 0 8px rgba(5, 150, 105, 0.5);
+            z-index: 10;
+        }
+
+        .point.y-next {
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+            z-index: 20;
+        }
+
+        .point-label {
+            position: absolute;
+            top: 18px;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        .point-label.k-label {
+            color: var(--success);
+            font-weight: 700;
+            top: -24px;
+        }
+
+        .point-label.y-next-label {
+            color: var(--accent);
+            font-weight: 700;
+            top: -24px;
+        }
+
+        .test-tick {
+            position: absolute;
+            width: 2px;
+            height: 12px;
+            background: rgba(249, 115, 22, 0.4);
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 15;
+        }
+
+        .figure-caption {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+
+        /* Action Pill Buttons */
+        .btn-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .btn {
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn:hover {
+            background: #f8fafc;
+            border-color: var(--border-focus);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+            border-color: #4338ca;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #ffffff;
+            border-color: var(--success);
+            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.15);
+        }
+
+        .btn-success:hover {
+            background: #047857;
+            border-color: #047857;
+            color: #ffffff;
+        }
+
+        /* Live Equation Callout */
+        .status-callout {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px;
+        }
+
+        .status-title {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Modern Table Elements */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mono-text {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        tr.covered td {
+            background-color: var(--success-light);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .status-badge.covered-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.uncovered-badge {
+            background: #f1f5f9;
+            color: var(--text-secondary);
+        }
+
+        /* "Is Conditional Coverage Possible?" Explainer Box */
+        .inquiry-box {
+            background: #fffbeb; /* Gentle amber card */
+            border: 1px solid #fef3c7;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .inquiry-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #92400e; /* Dark Amber */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .inquiry-content p {
+            font-size: 0.95rem;
+            color: #78350f;
+            margin-bottom: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .inquiry-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .inquiry-content strong {
+            color: #451a03;
+        }
+
+        .inquiry-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .inquiry-tabs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tab-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .tab-card-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #b45309;
+        }
+
+        .tab-card-desc {
+            font-size: 0.85rem;
+            color: #78350f;
+            line-height: 1.4;
+        }
+
+        /* Math Section Card */
+        .math-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .math-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .math-item {
+            border: 1px solid var(--border-color);
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            text-align: center;
+            min-width: 0; /* Prevents CSS Grid blowout */
+            overflow: hidden; /* Contains children */
+        }
+
+        .math-item-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .math-eqn {
+            font-size: 0.95rem; /* Reduced font size to fit better natively */
+            color: var(--text-main);
+            margin: 0.25rem 0;
+            width: 100%;
+            overflow-x: auto; /* Allows smooth horizontal scrolling */
+            overflow-y: hidden;
+            padding-bottom: 0.5rem; /* Room for scrollbar */
+        }
+
+        .math-item-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <span class="badge">Interactive Explainer</span>
+            <h1>Conformal Prediction Sandbox</h1>
+            <p class="subtitle">A visual, distribution-free simulation analyzing the mathematical boundary between <strong>Marginal</strong> and <strong>Conditional</strong> coverage.</p>
+        </header>
+
+        <!-- Stats Dashboard and Parameters Card -->
+        <div class="card">
+            <div class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                Parameters & Sandbox Metrics
+            </div>
+
+            <!-- Stats Dashboard -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Calibration Size (n)</span>
+                    <span class="stat-val" id="cardN">9</span>
+                    <span class="stat-desc">Reference samples</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Confidence Target</span>
+                    <span class="stat-val" id="cardTarget">80.0%</span>
+                    <span class="stat-desc">Target coverage (\(1 - \alpha\))</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Boundary Index (k)</span>
+                    <span class="stat-val" style="color: var(--success)" id="cardK">8</span>
+                    <span class="stat-desc">Order statistic threshold</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Analytical Coverage</span>
+                    <span class="stat-val" id="cardCoverage">80.0%</span>
+                    <span class="stat-desc">Theoretical minimum (\(k / (n+1)\))</span>
+                </div>
+            </div>
+
+            <!-- Controls Row -->
+            <div class="controls-row">
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Calibration Size (\(n\))</span>
+                        <span class="control-num" id="nVal">9</span>
+                    </div>
+                    <input type="range" id="nSlider" min="3" max="19" step="1" value="9">
+                </div>
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Significance Level (\(\alpha\))</span>
+                        <span class="control-num" id="alphaVal">0.20</span>
+                    </div>
+                    <input type="range" id="alphaSlider" min="0.05" max="0.40" step="0.05" value="0.20">
+                </div>
+            </div>
+        </div>
+
+        <!-- The Inquiry Explanation Callout -->
+        <div class="inquiry-box">
+            <div class="inquiry-header">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Wait, is Exact Conditional Coverage a Myth?
+            </div>
+            <div class="inquiry-content">
+                <p>In a strict, distribution-free sense—<strong>yes, exact feature-conditional coverage is mathematically impossible</strong> to guarantee with finite samples. Standard conformal prediction makes a much humbler guarantee: <strong>Marginal Coverage</strong>. Understanding this distinction is the key to using conformal prediction correctly in the real world.</p>
+                
+                <div class="inquiry-tabs">
+                    <div class="tab-card">
+                        <span class="tab-card-title">🔒 Marginal Coverage (Guaranteed)</span>
+                        <span class="tab-card-desc">
+                            Averages over <strong>both</strong> the choice of your calibration set \(\mathcal{D}_n\) and the new test sample. If you repeatedly collect new calibration data, the guarantee perfectly holds.
+                        </span>
+                    </div>
+                    <div class="tab-card">
+                        <span class="tab-card-title">⚠️ Conditional Coverage (Fluctuates)</span>
+                        <span class="tab-card-desc">
+                            Conditions on your <strong>single, frozen</strong> calibration set. Once you collect data, the actual coverage of new test points will deviate from \(1-\alpha\) due to the random placement of your samples!
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1D Visualizer Track Card -->
+        <div class="card">
+            <div class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success)"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                Figure 1. 1D Coordinate Partition Explorer
+            </div>
+
+            <!-- TikZ / SVG Style Coordinate Line -->
+            <div class="figure-container">
+                <div class="number-line" id="line">
+                    <!-- Shaded coverage region will be drawn here -->
+                    <div class="coverage-region" id="region"></div>
+                </div>
+                <div class="figure-caption">
+                    Calibration points \(\mathcal{D}_n\) (blue dots) partition the real line into \(n+1\) slots. The shaded green region represents our prediction interval \([-\infty, Y_{(k)}]\) bounded by the evaluated quantile \(Y_{(k)}\) (green dot). The test point is \(Y_{n+1}\) (orange dot).
+                </div>
+            </div>
+
+            <!-- Simulation Controls -->
+            <div class="btn-panel">
+                <button class="btn" id="drawBtn">
+                    <span>📍 Drop Single Point (\(Y_{n+1}\))</span>
+                </button>
+                <button class="btn btn-primary" id="simBtn">
+                    <span>⚡ Drop 1000 Points (Conditional)</span>
+                </button>
+                <button class="btn btn-success" id="marginalSimBtn">
+                    <span>🎲 Run 1000 Full Trials (Marginal)</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Mathematical Result Status -->
+            <div class="status-callout">
+                <div class="status-title" id="statusHeader">Sandbox Status</div>
+                <div class="math-eqn" id="status">
+                    $$\text{Waiting to run simulation...}$$
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Partition Slots Card -->
+        <div class="card">
+            <div class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary)"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                Slot Frequency Density Breakdown
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: -0.5rem;">
+                Under exchangeability, every single slot has a uniform \(\frac{1}{n+1}\) probability of receiving the next sample. Observe how uniform the slots become when executing a <strong>Marginal</strong> simulation!
+            </p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Partition Slot</th>
+                            <th>Interval Bounds</th>
+                            <th>Observed Counts</th>
+                            <th>Empirical Frequency</th>
+                            <th>Interval Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slotsTableBody">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dynamic Proof Details Card -->
+        <div class="math-card">
+            <div class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="m4 9 8 8 8-8"></path></svg>
+                Mathematical Foundation
+            </div>
+            
+            <div class="math-grid">
+                <div class="math-item">
+                    <span class="math-item-title">Quantile Selection</span>
+                    <div class="math-eqn" id="mathK">\(k = \lceil(1 - \alpha)(n+1)\rceil\)</div>
+                    <span class="math-item-desc">Inverse empirical ECDF slot matching rule</span>
+                </div>
+                <div class="math-item">
+                    <span class="math-item-title">Coverage Guarantee</span>
+                    <div class="math-eqn" id="probFormula">\(\mathbb{P}(Y_{n+1} \le Y_{(k)}) \ge 1 - \alpha\)</div>
+                    <span class="math-item-desc">Distribution-free marginal coverage guarantee</span>
+                </div>
+                <div class="math-item">
+                    <span class="math-item-title">Exchangeable Rank</span>
+                    <div class="math-eqn" id="slotFormula">\(\mathbb{P}(\text{Rank} = i) = \frac{1}{n+1}\)</div>
+                    <span class="math-item-desc">Uniform distribution across slots</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let n = 9;
+        let alpha = 0.20;
+        let calPoints = [];
+        let singleYNext = null;
+        let testPoints = [];
+        let slotCounts = [];
+        let isMarginalRun = false;
+        let marginalCoveragePct = 0;
+
+        const nSlider = document.getElementById('nSlider');
+        const alphaSlider = document.getElementById('alphaSlider');
+        
+        const cardN = document.getElementById('cardN');
+        const cardTarget = document.getElementById('cardTarget');
+        const cardK = document.getElementById('cardK');
+        const cardCoverage = document.getElementById('cardCoverage');
+        
+        const nVal = document.getElementById('nVal');
+        const alphaVal = document.getElementById('alphaVal');
+
+        const line = document.getElementById('line');
+        const region = document.getElementById('region');
+        const slotsTableBody = document.getElementById('slotsTableBody');
+        
+        const drawBtn = document.getElementById('drawBtn');
+        const simBtn = document.getElementById('simBtn');
+        const marginalSimBtn = document.getElementById('marginalSimBtn');
+        
+        const statusHeader = document.getElementById('statusHeader');
+        const status = document.getElementById('status');
+
+        const mathK = document.getElementById('mathK');
+        const slotFormula = document.getElementById('slotFormula');
+        const probFormula = document.getElementById('probFormula');
+
+        // Generate calibration points
+        function generateCalPoints() {
+            calPoints = [];
+            for (let i = 0; i < n; i++) {
+                let val = 12 + Math.random() * 76; // Keep spacing elegant
+                calPoints.push(val);
+            }
+            calPoints.sort((a, b) => a - b);
+        }
+
+        // Render Page & Layout
+        function render() {
+            // Remove old visual markers
+            const oldElements = document.querySelectorAll('.point, .point-label, .test-tick');
+            oldElements.forEach(el => el.remove());
+
+            const k = Math.ceil((1 - alpha) * (n + 1));
+            const targetPct = (100 - alpha * 100).toFixed(0) + '%';
+            
+            // Update Dashboard cards
+            cardN.innerText = n;
+            cardTarget.innerText = targetPct;
+            cardK.innerText = k;
+            cardCoverage.innerText = ((k / (n + 1)) * 100).toFixed(1) + '%';
+            
+            // Update Dynamic LaTeX Text
+            mathK.innerHTML = `$$k = \\lceil(1 - ${alpha.toFixed(2)}) \\times (${n} + 1)\\rceil = ${k}$$`;
+            slotFormula.innerHTML = `$$\\mathbb{P}(\\text{Rank} = i) = \\frac{1}{${n+1}} = ${(1/(n+1)*100).toFixed(1)}\\%$$`;
+            
+            let analyticalCoverage = k / (n + 1);
+            probFormula.innerHTML = `$$\\mathbb{P}(Y_{n+1} \\le Y_{(${k})}) = \\frac{${k}}{${n+1}} = ${(analyticalCoverage*100).toFixed(1)}\\% \\ge ${(100 - alpha*100).toFixed(0)}\\%$$`;
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+
+            // Figure Shading
+            let boundaryPct = 100;
+            if (k <= n) {
+                boundaryPct = calPoints[k - 1];
+                region.style.width = `${boundaryPct}%`;
+            } else {
+                region.style.width = '100%';
+            }
+
+            // Draw Blue Calibration Points on Figure
+            calPoints.forEach((pct, index) => {
+                const pointIdx = index + 1;
+                const isK = (pointIdx === k);
+
+                const pointEl = document.createElement('div');
+                pointEl.className = `point ${isK ? 'k-statistic' : 'calibration'}`;
+                pointEl.style.left = `${pct}%`;
+
+                const labelEl = document.createElement('div');
+                labelEl.className = `point-label ${isK ? 'k-label' : ''}`;
+                labelEl.style.left = `${pct}%`;
+                labelEl.innerText = `Y_(${pointIdx})`;
+
+                line.appendChild(pointEl);
+                line.appendChild(labelEl);
+            });
+
+            // Handle Render visual and table status depending on what run occurred
+            let totalCovered = 0;
+            let totalPoints = 0;
+
+            if (isMarginalRun) {
+                totalPoints = 1000;
+                totalCovered = Math.round(marginalCoveragePct * 10);
+                statusHeader.innerText = "🎲 Marginal Coverage Result";
+                status.innerHTML = `$$\\text{Coverage} = ${marginalCoveragePct.toFixed(1)}\\%\\quad\\text{(${totalCovered}/1000 inside across 1000 trials)}$$`;
+            }
+            else if (testPoints.length > 0) {
+                testPoints.forEach(pct => {
+                    const tick = document.createElement('div');
+                    tick.className = 'test-tick';
+                    tick.style.left = `${pct}%`;
+                    line.appendChild(tick);
+                });
+
+                testPoints.forEach(pct => {
+                    if (k > n || pct <= calPoints[k - 1]) {
+                        totalCovered++;
+                    }
+                });
+                totalPoints = testPoints.length;
+                const coverageRate = (totalCovered / totalPoints) * 100;
+                statusHeader.innerText = "⚡ Conditional Coverage Result";
+                status.innerHTML = `$$\\text{Coverage} = ${coverageRate.toFixed(1)}\\%\\quad\\text{(${totalCovered}/1000 inside frozen calibration set)}$$`;
+            }
+            else if (singleYNext !== null) {
+                const yEl = document.createElement('div');
+                yEl.className = 'point y-next';
+                yEl.style.left = `${singleYNext}%`;
+
+                const yLabel = document.createElement('div');
+                yLabel.className = 'point-label y-next-label';
+                yLabel.style.left = `${singleYNext}%`;
+                yLabel.innerText = 'Y_(n+1)';
+
+                line.appendChild(yEl);
+                line.appendChild(yLabel);
+
+                const isCovered = (k > n) || (singleYNext <= calPoints[k - 1]);
+                totalPoints = 1;
+                totalCovered = isCovered ? 1 : 0;
+                statusHeader.innerText = "📍 Single Drop Result";
+                status.innerHTML = isCovered 
+                    ? `$$Y_{n+1} \\le Y_{(${k})}\\quad\\text{— Covered (Inside interval)}$$`
+                    : `$$Y_{n+1} > Y_{(${k})}\\quad\\text{— Uncovered (Missed outside)}$$`;
+            } else {
+                statusHeader.innerText = "Sandbox Status";
+                status.innerHTML = `$$\\text{Waiting to run simulation...}$$`;
+            }
+
+            // Render Table body dynamically
+            renderTableBody(k, totalPoints);
+        }
+
+        // Render Table Body
+        function renderTableBody(k, totalPoints) {
+            slotsTableBody.innerHTML = '';
+            const totalSlots = n + 1;
+
+            for (let i = 0; i < totalSlots; i++) {
+                const count = slotCounts[i] || 0;
+                const isCovered = (i < k);
+                const pctVal = totalPoints > 0 ? ((count / totalPoints) * 100).toFixed(1) : '0.0';
+                
+                // Construct bounds text
+                let boundsStr = '';
+                if (i === 0) {
+                    boundsStr = `(-\\infty, Y_{(1)}]`;
+                } else if (i === n) {
+                    boundsStr = `(Y_{(${n})}, \\infty)`;
+                } else {
+                    boundsStr = `(Y_{(${i})}, Y_{(${i+1})}]`;
+                }
+
+                const tr = document.createElement('tr');
+                if (isCovered && totalPoints > 0) {
+                    tr.className = 'covered';
+                }
+
+                tr.innerHTML = `
+                    <td class="mono-text" style="font-weight: 600;">Slot ${i+1}</td>
+                    <td class="mono-text">$${boundsStr}$</td>
+                    <td class="mono-text" style="font-weight: 500;">${count}</td>
+                    <td class="mono-text" style="font-weight: 700;">${pctVal}\%</td>
+                    <td>
+                        <span class="status-badge ${isCovered ? 'covered-badge' : 'uncovered-badge'}">
+                            ${isCovered ? 'Covered Slot' : 'Uncovered Slot'}
+                        </span>
+                    </td>
+                `;
+                slotsTableBody.appendChild(tr);
+            }
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // Assign points to slots
+        function getSlotIndex(val, currentCalPoints) {
+            for (let i = 0; i < currentCalPoints.length; i++) {
+                if (val <= currentCalPoints[i]) {
+                    return i;
+                }
+            }
+            return currentCalPoints.length;
+        }
+
+        // Single Drop
+        function dropOne() {
+            isMarginalRun = false;
+            testPoints = [];
+            slotCounts = Array(n + 1).fill(0);
+            
+            singleYNext = 12 + Math.random() * 76;
+            const slotIdx = getSlotIndex(singleYNext, calPoints);
+            slotCounts[slotIdx] = 1;
+            
+            render();
+        }
+
+        // Drop 1000 Points (Conditional)
+        function drop1000() {
+            isMarginalRun = false;
+            singleYNext = null;
+            testPoints = [];
+            slotCounts = Array(n + 1).fill(0);
+
+            for (let i = 0; i < 1000; i++) {
+                let val = 12 + Math.random() * 76;
+                testPoints.push(val);
+                
+                const slotIdx = getSlotIndex(val, calPoints);
+                slotCounts[slotIdx]++;
+            }
+
+            render();
+        }
+
+        // Run 1000 Full Trials (Marginal)
+        function runMarginalSim() {
+            isMarginalRun = true;
+            singleYNext = null;
+            testPoints = [];
+            slotCounts = Array(n + 1).fill(0);
+            
+            let coveredCount = 0;
+            const k = Math.ceil((1 - alpha) * (n + 1));
+
+            for (let i = 0; i < 1000; i++) {
+                let tempCalPoints = [];
+                for (let j = 0; j < n; j++) {
+                    tempCalPoints.push(12 + Math.random() * 76);
+                }
+                tempCalPoints.sort((a, b) => a - b);
+
+                let tempYNext = 12 + Math.random() * 76;
+
+                const slotIdx = getSlotIndex(tempYNext, tempCalPoints);
+                slotCounts[slotIdx]++;
+
+                if (k > n || tempYNext <= tempCalPoints[k - 1]) {
+                    coveredCount++;
+                }
+            }
+
+            marginalCoveragePct = (coveredCount / 1000) * 100;
+            generateCalPoints();
+            render();
+        }
+
+        // Hook up inputs
+        nSlider.addEventListener('input', (e) => {
+            n = parseInt(e.target.value);
+            nVal.innerText = n;
+            resetSim();
+            generateCalPoints();
+            render();
+        });
+
+        alphaSlider.addEventListener('input', (e) => {
+            alpha = parseFloat(e.target.value);
+            alphaVal.innerText = alpha.toFixed(2);
+            resetSim();
+            render();
+        });
+
+        function resetSim() {
+            isMarginalRun = false;
+            singleYNext = null;
+            testPoints = [];
+            slotCounts = Array(n + 1).fill(0);
+        }
+
+        drawBtn.addEventListener('click', dropOne);
+        simBtn.addEventListener('click', drop1000);
+        marginalSimBtn.addEventListener('click', runMarginalSim);
+
+        // Initial setup
+        generateCalPoints();
+        resetSim();
+        render();
+    </script>
+</body>
+</html>
