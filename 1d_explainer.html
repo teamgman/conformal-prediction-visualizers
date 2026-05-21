@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marginal vs. Conditional Coverage: A 1-D Explainer</title>
     
-    <!-- Modern Sans-Serif Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    
     <!-- MathJax for rendering LaTeX formulas beautifully -->
     <script>
         window.MathJax = {
@@ -26,24 +21,24 @@
     
     <style>
         :root {
-            --bg-color: #f8fafc; /* Beautiful soft blue-gray background */
+            --bg-color: #ffffff;
             --card-bg: #ffffff;
-            --text-main: #0f172a; /* Slate 900 */
-            --text-secondary: #475569; /* Slate 600 */
-            --text-muted: #64748b; /* Slate 500 */
+            --text-main: #222222;
+            --text-secondary: #555555;
+            --text-muted: #777777;
             
-            --primary: #4f46e5; /* Indigo 600 - Calibration */
-            --primary-light: rgba(79, 70, 229, 0.1);
-            --success: #059669; /* Emerald 600 - Coverage Boundary */
-            --success-light: rgba(5, 150, 105, 0.08);
-            --accent: #f97316; /* Orange 500 - Test Sample */
-            --accent-light: rgba(249, 115, 22, 0.1);
+            --primary: #1f77b4; /* Matplotlib Blue */
+            --primary-light: #ffffff;
+            --success: #2ca02c; /* Matplotlib Green */
+            --success-light: #ffffff;
+            --accent: #d62728; /* Matplotlib Red */
+            --accent-light: #ffffff;
             
-            --border-color: #e2e8f0; /* Slate 200 */
-            --border-focus: #cbd5e1; /* Slate 300 */
+            --border-color: #112233;
+            --border-focus: #112233;
             
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+            --font-sans: 'Georgia', 'Times New Roman', serif;
+            --font-mono: 'Courier New', Courier, monospace;
         }
 
         * {
@@ -85,14 +80,14 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
+            border-radius: 4px;
             margin-bottom: 0.75rem;
+            border: 1px solid var(--primary);
         }
 
         h1 {
             font-size: 2.25rem;
-            font-weight: 800;
-            letter-spacing: -0.025em;
+            font-weight: normal;
             line-height: 1.2;
             color: var(--text-main);
             margin-bottom: 0.75rem;
@@ -101,26 +96,29 @@
         .subtitle {
             font-size: 1.125rem;
             color: var(--text-secondary);
-            font-weight: 400;
+            font-weight: normal;
             max-width: 700px;
         }
 
         /* Beautiful Clean Cards */
         .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            border: none;
+            padding: 2rem 0;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
+        
+        hr.tufte-rule {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
 
         .card-title {
             font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
+            font-weight: bold;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -136,24 +134,22 @@
         }
 
         .stat-card {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
+            background: transparent;
+            border: none;
+            border-left: 2px solid var(--border-color);
+            padding: 0.5rem 1.25rem;
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
-            transition: transform 0.2s, border-color 0.2s;
         }
 
         .stat-card:hover {
-            border-color: var(--border-focus);
-            transform: translateY(-2px);
+            /* No hover per constraints */
         }
 
         .stat-label {
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-muted);
@@ -161,10 +157,11 @@
 
         .stat-val {
             font-size: 1.75rem;
-            font-weight: 800;
+            font-weight: bold;
             color: var(--text-main);
             line-height: 1;
             margin: 0.25rem 0;
+            font-family: var(--font-mono);
         }
 
         .stat-desc {
@@ -195,16 +192,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: 600;
+            font-weight: bold;
             font-size: 0.875rem;
         }
 
         .control-num {
             font-family: var(--font-mono);
             color: var(--primary);
-            background: var(--primary-light);
-            padding: 0.125rem 0.5rem;
-            border-radius: 4px;
+            font-weight: bold;
             font-size: 0.8rem;
         }
 
@@ -214,33 +209,27 @@
             width: 100%;
             height: 6px;
             background: #e2e8f0;
-            border-radius: 9999px;
+            border: 1px solid var(--border-color);
             outline: none;
-            accent-color: var(--primary);
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: var(--primary);
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
-            transition: transform 0.1s;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
         }
 
         /* High-Fidelity Interactive Figure */
         .figure-container {
-            border: 1px solid var(--border-color);
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 3rem 2rem;
+            border: none;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            background: transparent;
+            padding: 3rem 0;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -249,26 +238,22 @@
         }
 
         .number-line {
-            height: 6px;
-            background: #e2e8f0;
+            height: 4px;
+            background: #d1d5db;
             width: 100%;
             position: relative;
-            border-radius: 9999px;
             margin: 2rem 0;
         }
 
         .coverage-region {
             position: absolute;
             left: 0;
-            height: 6px;
+            height: 4px;
             top: 0;
-            background: var(--success-light);
-            border-right: 2px dashed var(--success);
-            border-radius: 9999px 0 0 9999px;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--success);
+            opacity: 0.3;
         }
 
-        /* Custom points along track */
         .point {
             position: absolute;
             width: 14px;
@@ -277,26 +262,19 @@
             top: 50%;
             transform: translate(-50%, -50%);
             cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .point:hover {
-            transform: translate(-50%, -50%) scale(1.3);
-            z-index: 100;
         }
 
         .point.calibration {
             background: var(--primary);
             border: 2px solid #ffffff;
+            z-index: 10;
         }
 
         .point.k-statistic {
             background: var(--success);
-            border: 2.5px solid #ffffff;
+            border: 2px solid #ffffff;
             width: 16px;
             height: 16px;
-            box-shadow: 0 0 8px rgba(5, 150, 105, 0.5);
             z-index: 10;
         }
 
@@ -304,41 +282,38 @@
             width: 16px;
             height: 16px;
             background: var(--accent);
-            border: 2.5px solid #ffffff;
-            box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+            border: 2px solid #ffffff;
             z-index: 20;
         }
 
         .point-label {
             position: absolute;
-            top: 18px;
             transform: translateX(-50%);
             font-size: 0.75rem;
-            font-weight: 600;
             white-space: nowrap;
             color: var(--text-secondary);
         }
 
         .point-label.k-label {
             color: var(--success);
-            font-weight: 700;
-            top: -24px;
+            font-weight: bold;
         }
 
         .point-label.y-next-label {
             color: var(--accent);
-            font-weight: 700;
-            top: -24px;
+            font-weight: bold;
+            top: -65px;
         }
 
         .test-tick {
             position: absolute;
-            width: 2px;
-            height: 12px;
-            background: rgba(249, 115, 22, 0.4);
+            width: 1.5px;
+            height: 20px;
+            background: rgba(214, 39, 40, 0.1);
             top: 50%;
             transform: translate(-50%, -50%);
-            z-index: 15;
+            z-index: 5;
+            pointer-events: none;
         }
 
         .figure-caption {
@@ -361,62 +336,44 @@
         .btn {
             font-family: var(--font-sans);
             font-size: 0.875rem;
-            font-weight: 600;
             padding: 0.625rem 1.25rem;
-            border-radius: 9999px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid var(--border-color);
             background: #ffffff;
-            color: var(--text-secondary);
+            color: var(--text-main);
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .btn:hover {
-            background: #f8fafc;
-            border-color: var(--border-focus);
-            color: var(--text-main);
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
+            /* No hover */
         }
 
         .btn-primary {
-            background: var(--primary);
-            color: #ffffff;
+            background: #ffffff;
+            color: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
         }
 
         .btn-primary:hover {
-            background: #4338ca;
-            border-color: #4338ca;
-            color: #ffffff;
+            /* No hover */
         }
 
         .btn-success {
-            background: var(--success);
-            color: #ffffff;
+            background: #ffffff;
+            color: var(--success);
             border-color: var(--success);
-            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.15);
         }
 
         .btn-success:hover {
-            background: #047857;
-            border-color: #047857;
-            color: #ffffff;
+            /* No hover */
         }
 
         /* Live Equation Callout */
         .status-callout {
-            background: #f8fafc;
+            background: #ffffff;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
             padding: 1.25rem;
             text-align: center;
             font-family: var(--font-mono);
@@ -431,7 +388,7 @@
 
         .status-title {
             font-family: var(--font-sans);
-            font-weight: 700;
+            font-weight: bold;
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
@@ -444,7 +401,6 @@
             width: 100%;
             overflow-x: auto;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
         }
 
         table {
@@ -455,14 +411,13 @@
         }
 
         th {
-            background: #f8fafc;
-            font-weight: 600;
+            background: #ffffff;
+            font-weight: bold;
             color: var(--text-secondary);
             padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border-color);
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         td {
@@ -487,29 +442,29 @@
         .status-badge {
             display: inline-flex;
             align-items: center;
-            font-weight: 600;
+            font-weight: bold;
             font-size: 0.75rem;
             padding: 0.125rem 0.5rem;
-            border-radius: 6px;
+            border: 1px solid transparent;
         }
 
         .status-badge.covered-badge {
-            background: rgba(16, 185, 129, 0.15);
+            background: #ffffff;
             color: var(--success);
+            border-color: var(--success);
         }
 
         .status-badge.uncovered-badge {
-            background: #f1f5f9;
+            background: #ffffff;
             color: var(--text-secondary);
+            border-color: var(--border-color);
         }
 
         /* "Is Conditional Coverage Possible?" Explainer Box */
         .inquiry-box {
-            background: #fffbeb; /* Gentle amber card */
-            border: 1px solid #fef3c7;
-            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
             padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.05);
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -517,8 +472,8 @@
 
         .inquiry-header {
             font-size: 1.25rem;
-            font-weight: 800;
-            color: #92400e; /* Dark Amber */
+            font-weight: bold;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -526,17 +481,13 @@
 
         .inquiry-content p {
             font-size: 0.95rem;
-            color: #78350f;
+            color: var(--text-secondary);
             margin-bottom: 0.85rem;
             line-height: 1.5;
         }
 
         .inquiry-content p:last-child {
             margin-bottom: 0;
-        }
-
-        .inquiry-content strong {
-            color: #451a03;
         }
 
         .inquiry-tabs {
@@ -553,10 +504,10 @@
         }
 
         .tab-card {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            border-radius: 12px;
-            padding: 1rem;
+            background: transparent;
+            border: none;
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 0;
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
@@ -564,15 +515,14 @@
 
         .tab-card-title {
             font-size: 0.85rem;
-            font-weight: 700;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #b45309;
+            color: var(--text-main);
         }
 
         .tab-card-desc {
             font-size: 0.85rem;
-            color: #78350f;
+            color: var(--text-secondary);
             line-height: 1.4;
         }
 
@@ -580,7 +530,6 @@
         .math-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
             padding: 2rem;
             display: flex;
             flex-direction: column;
@@ -594,35 +543,34 @@
         }
 
         .math-item {
-            border: 1px solid var(--border-color);
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 1.25rem;
+            border: none;
+            border-bottom: 1px dotted var(--border-color);
+            background: transparent;
+            padding: 1.25rem 0;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
             align-items: center;
             text-align: center;
-            min-width: 0; /* Prevents CSS Grid blowout */
-            overflow: hidden; /* Contains children */
+            min-width: 0; 
+            overflow: hidden; 
         }
 
         .math-item-title {
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
             color: var(--text-muted);
         }
 
         .math-eqn {
-            font-size: 0.95rem; /* Reduced font size to fit better natively */
+            font-size: 0.95rem;
             color: var(--text-main);
             margin: 0.25rem 0;
             width: 100%;
-            overflow-x: auto; /* Allows smooth horizontal scrolling */
+            overflow-x: auto;
             overflow-y: hidden;
-            padding-bottom: 0.5rem; /* Room for scrollbar */
+            padding-bottom: 0.5rem;
         }
 
         .math-item-desc {
@@ -634,6 +582,11 @@
 <body>
 
     <div class="container">
+        <nav style="margin-bottom: 1rem; font-size: 0.85rem; font-family: var(--font-mono); display: flex; gap: 1rem;">
+            <a href="index.html" style="color: var(--text-muted); text-decoration: none;">← Back to Index</a>
+            <span style="color: var(--text-muted);">|</span>
+            <a href="https://gavinxiong.com" style="color: var(--text-muted); text-decoration: none;">gavinxiong.com</a>
+        </nav>
         
         <!-- Header -->
         <header>
@@ -642,10 +595,11 @@
             <p class="subtitle">A visual, distribution-free simulation analyzing the mathematical boundary between <strong>Marginal</strong> and <strong>Conditional</strong> coverage.</p>
         </header>
 
-        <!-- Stats Dashboard and Parameters Card -->
+        <hr class="tufte-rule" />
+
+        <!-- Top Dashboard and Parameters Card -->
         <div class="card">
             <div class="card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 Parameters & Explainer Metrics
             </div>
 
@@ -692,10 +646,11 @@
             </div>
         </div>
 
-        <!-- The Inquiry Explanation Callout -->
+        <hr class="tufte-rule" />
+
+        <!-- Deep Dive Explanation Tabs -->
         <div class="inquiry-box">
             <div class="inquiry-header">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 Wait, is Exact Conditional Coverage a Myth?
             </div>
             <div class="inquiry-content">
@@ -703,13 +658,13 @@
                 
                 <div class="inquiry-tabs">
                     <div class="tab-card">
-                        <span class="tab-card-title">🔒 Marginal Coverage (Guaranteed)</span>
+                        <span class="tab-card-title">Marginal Coverage (Guaranteed)</span>
                         <span class="tab-card-desc">
                             Averages over <strong>both</strong> the choice of your calibration set \(\mathcal{D}_n\) and the new test sample. If you repeatedly collect new calibration data, the guarantee perfectly holds.
                         </span>
                     </div>
                     <div class="tab-card">
-                        <span class="tab-card-title">⚠️ Conditional Coverage (Fluctuates)</span>
+                        <span class="tab-card-title">Conditional Coverage (Fluctuates)</span>
                         <span class="tab-card-desc">
                             Conditions on your <strong>single, frozen</strong> calibration set. Once you collect data, the actual coverage of new test points will deviate from \(1-\alpha\) due to the random placement of your samples!
                         </span>
@@ -718,10 +673,11 @@
             </div>
         </div>
 
-        <!-- 1D Visualizer Track Card -->
+        <hr class="tufte-rule" />
+
+        <!-- Interactive Visualizer Panel -->
         <div class="card">
             <div class="card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success)"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
                 Figure 1. 1D Coordinate Partition Explorer
             </div>
 
@@ -732,7 +688,7 @@
                     <div class="coverage-region" id="region"></div>
                 </div>
                 <div class="figure-caption">
-                    Calibration points \(\mathcal{D}_n\) (blue dots) partition the real line into \(n+1\) slots. The shaded green region represents our prediction interval \([-\infty, Y_{(k)}]\) bounded by the evaluated quantile \(Y_{(k)}\) (green dot). The test point is \(Y_{n+1}\) (orange dot).
+                    Calibration points \(\mathcal{D}_n\) (blue dots) partition the real line into \(n+1\) slots. The shaded green region represents our prediction interval \([-\infty, Y_{(k)}]\) bounded by the evaluated quantile \(Y_{(k)}\) (green dot). The test point is \(Y_{n+1}\) (red dot).
                 </div>
             </div>
 
@@ -761,7 +717,6 @@
         <!-- Table Partition Slots Card -->
         <div class="card">
             <div class="card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary)"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                 Slot Frequency Density Breakdown
             </div>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: -0.5rem;">
@@ -789,7 +744,6 @@
         <!-- Dynamic Proof Details Card -->
         <div class="math-card">
             <div class="card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="m4 9 8 8 8-8"></path></svg>
                 Mathematical Foundation
             </div>
             
@@ -854,8 +808,7 @@
         function generateCalPoints() {
             calPoints = [];
             for (let i = 0; i < n; i++) {
-                let val = 12 + Math.random() * 76; // Keep spacing elegant
-                calPoints.push(val);
+                calPoints.push(12 + Math.random() * 76);
             }
             calPoints.sort((a, b) => a - b);
         }
@@ -895,6 +848,9 @@
                 region.style.width = '100%';
             }
 
+            let levels = [-26, 18, -44, 36]; // Top, Bottom, Far Top, Far Bottom
+            let lastUsedPos = [-100, -100, -100, -100];
+
             // Draw Blue Calibration Points on Figure
             calPoints.forEach((pct, index) => {
                 const pointIdx = index + 1;
@@ -907,6 +863,18 @@
                 const labelEl = document.createElement('div');
                 labelEl.className = `point-label ${isK ? 'k-label' : ''}`;
                 labelEl.style.left = `${pct}%`;
+                
+                // Dynamic collision avoidance for labels
+                let chosenLevel = 0;
+                for (let l = 0; l < levels.length; l++) {
+                    if (pct - lastUsedPos[l] > 4.5) { // 4.5% horizontal clearance
+                        chosenLevel = l;
+                        break;
+                    }
+                }
+                lastUsedPos[chosenLevel] = pct;
+                
+                labelEl.style.top = `${levels[chosenLevel]}px`;
                 labelEl.innerText = `Y_(${pointIdx})`;
 
                 line.appendChild(pointEl);
@@ -996,10 +964,10 @@
                 }
 
                 tr.innerHTML = `
-                    <td class="mono-text" style="font-weight: 600;">Slot ${i+1}</td>
+                    <td class="mono-text" style="font-weight: bold;">Slot ${i+1}</td>
                     <td class="mono-text">$${boundsStr}$</td>
-                    <td class="mono-text" style="font-weight: 500;">${count}</td>
-                    <td class="mono-text" style="font-weight: 700;">${pctVal}\%</td>
+                    <td class="mono-text" style="font-weight: bold;">${count}</td>
+                    <td class="mono-text" style="font-weight: bold;">${pctVal}\%</td>
                     <td>
                         <span class="status-badge ${isCovered ? 'covered-badge' : 'uncovered-badge'}">
                             ${isCovered ? 'Covered Slot' : 'Uncovered Slot'}
