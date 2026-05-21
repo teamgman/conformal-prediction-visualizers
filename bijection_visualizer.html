@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conformal Prediction Equivalence</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for rendering LaTeX formulas beautifully -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --bg-deep: #0a0e17;
+            --bg-card: #111827;
+            --bg-raised: #1f2937;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            --accent-cyan: #22d3ee;
+            --accent-red: #f43f5e;
+            --accent-amber: #f59e0b;
+            --accent-green: #10b981;
+            
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 200px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .control-val {
+            font-family: var(--font-mono);
+            color: var(--accent-cyan);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+        }
+
+        .btn {
+            background: #334155;
+            color: var(--text-main);
+            border: 1px solid #475569;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #475569;
+        }
+
+        /* Canvas Areas */
+        .canvas-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .canvas-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(17, 24, 39, 0.8);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        /* Evaluation Panel */
+        .eval-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .eval-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .eval-box {
+            background: var(--bg-raised);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .eval-box-title {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .predicate-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #111827;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            border-left: 3px solid #475569;
+        }
+
+        .badge-true {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .badge-false {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--accent-red);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .status-intact {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+        }
+
+        .status-broken {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Conformal Prediction Equivalence</h1>
+            <p class="subtitle">Interactive demonstration of equivalent formulations for prediction set inclusion</p>
+        </header>
+
+        <!-- Controls -->
+        <div class="card controls">
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Significance Level \(\alpha\)</span>
+                    <span class="control-val" id="alpha-val">0.10</span>
+                </div>
+                <input type="range" id="alpha-slider" min="0.01" max="0.5" step="0.01" value="0.10">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Candidate Score \(V\)</span>
+                    <span class="control-val" id="v-val">0.00</span>
+                </div>
+                <input type="range" id="v-slider" min="0" max="10" step="0.01" value="0">
+            </div>
+
+            <button class="btn" id="regen-btn">Regenerate Calibration Set ⟳</button>
+        </div>
+
+        <!-- Canvases -->
+        <div class="card canvas-container">
+            <div class="canvas-wrapper">
+                <div class="canvas-label">1. Empirical Cumulative Distribution Function \(\hat{F}_n(v)\)</div>
+                <canvas id="ecdf-canvas" width="800" height="300"></canvas>
+            </div>
+            <div class="canvas-wrapper">
+                <div class="canvas-label">2. Calibration Scores \(R_i\) and Candidate Score \(V\)</div>
+                <canvas id="scanner-canvas" width="800" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- Evaluation Panel -->
+        <div class="card">
+            <div class="eval-grid">
+                <!-- Metrics -->
+                <div class="eval-box">
+                    <div class="eval-box-title">Computed Parameters</div>
+                    <div class="metric-line">
+                        <span>Target rank \(k = \lceil(1-\alpha)(n+1)\rceil\)</span>
+                        <span id="metric-k" style="color: var(--accent-cyan)">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span>Threshold \(R_{(k)}\)</span>
+                        <span id="metric-rk" style="color: var(--accent-cyan)">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span>Target probability \(p = k/n\)</span>
+                        <span id="metric-p" style="color: var(--accent-cyan)">-</span>
+                    </div>
+                    <div class="metric-line">
+                        <span>Indicator fraction \(\frac{1}{n} \sum_{i=1}^n \mathbb{I}(R_i < V)\)</span>
+                        <span id="metric-frac" style="color: var(--accent-cyan)">-</span>
+                    </div>
+                </div>
+
+                <!-- Predicates -->
+                <div class="eval-box">
+                    <div class="eval-box-title">Formulation Predicates</div>
+                    <div class="predicate-line" id="pred-1-line">
+                        <span>Order Statistic: \(V \le R_{(k)}\)</span>
+                        <span class="badge-true" id="pred-1">TRUE</span>
+                    </div>
+                    <div class="predicate-line" id="pred-2-line">
+                        <span>Empirical Quantile: \(V \le \hat{q}(p)\)</span>
+                        <span class="badge-true" id="pred-2">TRUE</span>
+                    </div>
+                    <div class="predicate-line" id="pred-3-line">
+                        <span>Empirical Counting: \(\frac{1}{n} \sum_{i=1}^n \mathbb{I}(R_i < V) < \frac{k}{n}\)</span>
+                        <span class="badge-true" id="pred-3">TRUE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="status-banner" class="status-banner status-intact">
+                Equivalence Verified
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const n_2 = 20;
+        let residuals = [];
+        let alpha = 0.10;
+        let v_score = 0;
+        let max_res = 0;
+
+        // DOM Elements
+        const alphaSlider = document.getElementById('alpha-slider');
+        const vSlider = document.getElementById('v-slider');
+        const alphaVal = document.getElementById('alpha-val');
+        const vVal = document.getElementById('v-val');
+        const regenBtn = document.getElementById('regen-btn');
+
+        const ecdfCanvas = document.getElementById('ecdf-canvas');
+        const scannerCanvas = document.getElementById('scanner-canvas');
+        const ctxEcdf = ecdfCanvas.getContext('2d');
+        const ctxScan = scannerCanvas.getContext('2d');
+
+        const metricK = document.getElementById('metric-k');
+        const metricRk = document.getElementById('metric-rk');
+        const metricP = document.getElementById('metric-p');
+        const metricFrac = document.getElementById('metric-frac');
+
+        const pred1 = document.getElementById('pred-1');
+        const pred2 = document.getElementById('pred-2');
+        const pred3 = document.getElementById('pred-3');
+        
+        const pred1Line = document.getElementById('pred-1-line');
+        const pred2Line = document.getElementById('pred-2-line');
+        const pred3Line = document.getElementById('pred-3-line');
+        
+        const statusBanner = document.getElementById('status-banner');
+
+        // Chi-Square Generator (df=3)
+        function randn_bm() {
+            let u = 0, v = 0;
+            while(u === 0) u = Math.random();
+            while(v === 0) v = Math.random();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+
+        function generateChiSquare(df) {
+            let sum = 0;
+            for(let i=0; i<df; i++) {
+                let z = randn_bm();
+                sum += z*z;
+            }
+            return sum;
+        }
+
+        function initData() {
+            residuals = [];
+            for(let i=0; i<n_2; i++) {
+                residuals.push(generateChiSquare(3));
+            }
+            residuals.sort((a,b) => a-b);
+            max_res = residuals[n_2 - 1];
+            
+            const maxV = Math.ceil(max_res + 2);
+            vSlider.max = maxV;
+            
+            // Re-bound V if needed
+            if (v_score > maxV) {
+                v_score = maxV;
+                vSlider.value = v_score;
+                vVal.innerText = v_score.toFixed(2);
+            }
+            
+            updateVisuals();
+        }
+
+        // Math Helpers
+        function xToPixel(val, width, maxVal) {
+            const padding = 40;
+            return padding + (val / maxVal) * (width - 2 * padding);
+        }
+        
+        function yToPixel(val, height) {
+            const paddingBottom = 30;
+            const paddingTop = 20;
+            const drawHeight = height - paddingBottom - paddingTop;
+            // val goes from 0 to 1.1 (to show p > 1 if k > n_2)
+            return height - paddingBottom - (val / 1.1) * drawHeight;
+        }
+
+        function updateVisuals() {
+            // Recalculate parameters
+            const k = Math.ceil((1 - alpha) * (n_2 + 1));
+            const p = k / n_2;
+            let R_k = (k <= n_2) ? residuals[k - 1] : Infinity;
+            let q_hat = R_k; // Inverse ECDF evaluation
+            
+            let crimsonCount = 0;
+            for(let i=0; i<n_2; i++) {
+                if (residuals[i] < v_score) crimsonCount++;
+            }
+
+            // Draw ECDF Canvas
+            const wE = ecdfCanvas.width;
+            const hE = ecdfCanvas.height;
+            const maxX = Math.ceil(max_res + 2);
+            
+            ctxEcdf.clearRect(0, 0, wE, hE);
+            
+            // Draw grid lines
+            ctxEcdf.strokeStyle = '#334155';
+            ctxEcdf.lineWidth = 1;
+            ctxEcdf.beginPath();
+            ctxEcdf.moveTo(xToPixel(0, wE, maxX), yToPixel(0, hE));
+            ctxEcdf.lineTo(xToPixel(maxX, wE, maxX), yToPixel(0, hE));
+            ctxEcdf.moveTo(xToPixel(0, wE, maxX), yToPixel(0, hE));
+            ctxEcdf.lineTo(xToPixel(0, wE, maxX), yToPixel(1.1, hE));
+            ctxEcdf.stroke();
+
+            // Plot ECDF (Right-continuous)
+            ctxEcdf.strokeStyle = '#22d3ee';
+            ctxEcdf.lineWidth = 2;
+            
+            let currentY = 0;
+            let currentX = 0;
+            
+            for(let i=0; i<n_2; i++) {
+                let nextX = residuals[i];
+                
+                // Horizontal line
+                ctxEcdf.beginPath();
+                ctxEcdf.moveTo(xToPixel(currentX, wE, maxX), yToPixel(currentY, hE));
+                ctxEcdf.lineTo(xToPixel(nextX, wE, maxX), yToPixel(currentY, hE));
+                ctxEcdf.stroke();
+                
+                // Jump
+                let nextY = (i + 1) / n_2;
+                
+                // Vertical dotted connector (optional, visual aid)
+                ctxEcdf.beginPath();
+                ctxEcdf.setLineDash([2, 4]);
+                ctxEcdf.strokeStyle = 'rgba(34, 211, 238, 0.4)';
+                ctxEcdf.moveTo(xToPixel(nextX, wE, maxX), yToPixel(currentY, hE));
+                ctxEcdf.lineTo(xToPixel(nextX, wE, maxX), yToPixel(nextY, hE));
+                ctxEcdf.stroke();
+                ctxEcdf.setLineDash([]);
+                ctxEcdf.strokeStyle = '#22d3ee';
+                
+                currentX = nextX;
+                currentY = nextY;
+            }
+            // Final infinite ray
+            ctxEcdf.beginPath();
+            ctxEcdf.moveTo(xToPixel(currentX, wE, maxX), yToPixel(1.0, hE));
+            ctxEcdf.lineTo(xToPixel(maxX, wE, maxX), yToPixel(1.0, hE));
+            ctxEcdf.stroke();
+
+            // Draw p line (amber dashed)
+            ctxEcdf.strokeStyle = '#f59e0b';
+            ctxEcdf.lineWidth = 2;
+            ctxEcdf.setLineDash([5, 5]);
+            ctxEcdf.beginPath();
+            ctxEcdf.moveTo(xToPixel(0, wE, maxX), yToPixel(p, hE));
+            if (k <= n_2) {
+                ctxEcdf.lineTo(xToPixel(R_k, wE, maxX), yToPixel(p, hE));
+            } else {
+                ctxEcdf.lineTo(xToPixel(maxX, wE, maxX), yToPixel(p, hE));
+            }
+            ctxEcdf.stroke();
+            
+            // Draw drop-down line for R_k
+            if (k <= n_2) {
+                ctxEcdf.beginPath();
+                ctxEcdf.moveTo(xToPixel(R_k, wE, maxX), yToPixel(p, hE));
+                ctxEcdf.lineTo(xToPixel(R_k, wE, maxX), yToPixel(0, hE));
+                ctxEcdf.stroke();
+                
+                // Intersection dot
+                ctxEcdf.fillStyle = '#f59e0b';
+                ctxEcdf.beginPath();
+                ctxEcdf.arc(xToPixel(R_k, wE, maxX), yToPixel(p, hE), 5, 0, Math.PI * 2);
+                ctxEcdf.fill();
+            }
+            ctxEcdf.setLineDash([]);
+
+            // Draw Scanner line (V score)
+            ctxEcdf.strokeStyle = '#10b981'; // Green for tracking bar
+            ctxEcdf.lineWidth = 2;
+            ctxEcdf.beginPath();
+            ctxEcdf.moveTo(xToPixel(v_score, wE, maxX), yToPixel(1.1, hE));
+            ctxEcdf.lineTo(xToPixel(v_score, wE, maxX), yToPixel(0, hE));
+            ctxEcdf.stroke();
+
+
+            // Draw Scanner Canvas
+            const wS = scannerCanvas.width;
+            const hS = scannerCanvas.height;
+            ctxScan.clearRect(0, 0, wS, hS);
+            
+            // Baseline
+            ctxScan.strokeStyle = '#334155';
+            ctxScan.lineWidth = 2;
+            ctxScan.beginPath();
+            ctxScan.moveTo(xToPixel(0, wS, maxX), hS/2);
+            ctxScan.lineTo(xToPixel(maxX, wS, maxX), hS/2);
+            ctxScan.stroke();
+            
+            // Scanner tracking line
+            ctxScan.strokeStyle = '#10b981';
+            ctxScan.lineWidth = 2;
+            ctxScan.beginPath();
+            ctxScan.moveTo(xToPixel(v_score, wS, maxX), 0);
+            ctxScan.lineTo(xToPixel(v_score, wS, maxX), hS);
+            ctxScan.stroke();
+
+            // Dots
+            for(let i=0; i<n_2; i++) {
+                let px = xToPixel(residuals[i], wS, maxX);
+                let py = hS/2;
+                
+                if (residuals[i] < v_score) {
+                    ctxScan.fillStyle = '#f43f5e'; // Crimson
+                } else {
+                    ctxScan.fillStyle = '#64748b'; // Gray
+                }
+                
+                ctxScan.beginPath();
+                ctxScan.arc(px, py, 6, 0, Math.PI*2);
+                ctxScan.fill();
+            }
+
+
+            // Update Text Metrics
+            metricK.innerText = k.toString();
+            metricRk.innerText = (k <= n_2) ? R_k.toFixed(4) : "∞";
+            metricP.innerText = p.toFixed(4);
+            metricFrac.innerText = `${crimsonCount} / ${n_2} (${(crimsonCount/n_2).toFixed(2)})`;
+
+            // Evaluate Predicates
+            let eq1 = k > n_2 ? true : (v_score <= R_k);
+            let eq2 = k > n_2 ? true : (v_score <= q_hat);
+            let eq3 = (crimsonCount / n_2) < (k / n_2);
+
+            function setBadge(el, lineEl, val) {
+                el.innerText = val ? "TRUE" : "FALSE";
+                el.className = val ? "badge-true" : "badge-false";
+                lineEl.style.borderLeftColor = val ? "#10b981" : "#f43f5e";
+            }
+
+            setBadge(pred1, pred1Line, eq1);
+            setBadge(pred2, pred2Line, eq2);
+            setBadge(pred3, pred3Line, eq3);
+
+            // Verify formulation agreement
+            if (eq1 === eq2 && eq2 === eq3) {
+                statusBanner.innerText = "Equivalence Verified";
+                statusBanner.className = "status-banner status-intact";
+            } else {
+                statusBanner.innerText = "Equivalence Violation Detected";
+                statusBanner.className = "status-banner status-broken";
+            }
+        }
+
+        // Event Listeners
+        alphaSlider.addEventListener('input', (e) => {
+            alpha = parseFloat(e.target.value);
+            alphaVal.innerText = alpha.toFixed(2);
+            updateVisuals();
+        });
+
+        vSlider.addEventListener('input', (e) => {
+            v_score = parseFloat(e.target.value);
+            vVal.innerText = v_score.toFixed(2);
+            updateVisuals();
+        });
+
+        regenBtn.addEventListener('click', () => {
+            initData();
+        });
+
+        // Bootstrap
+        initData();
+    </script>
+</body>
+</html>
