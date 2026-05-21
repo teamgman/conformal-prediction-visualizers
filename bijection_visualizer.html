@@ -21,18 +21,18 @@
     
     <style>
         :root {
-            --bg-deep: #ffffff;
+            --bg-deep: #f2f4f2;
             --bg-card: #ffffff;
             --bg-raised: #ffffff;
-            --text-main: #222222;
+            --text-main: #1c231c;
             --text-muted: #555555;
             
-            --accent-main: #222222;
+            --accent-main: #1c231c;
             --accent-red: #d62728;
             --accent-amber: #ff7f0e;
-            --accent-green: #2ca02c;
+            --accent-green: #3e5c46;
             
-            --border-color: #112233;
+            --border-color: #1c231c;
             
             --font-main: 'Georgia', 'Times New Roman', serif;
             --font-mono: 'Courier New', Courier, monospace;
@@ -111,42 +111,36 @@
 
         .control-val {
             font-family: var(--font-mono);
-            color: var(--accent-main);
+            color: var(--accent-green);
             font-weight: bold;
         }
 
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
-            height: 6px;
-            background: #e5e7eb;
-            border: 1px solid #d1d5db;
+            height: 1px;
+            background: var(--border-color);
+            border: none;
             outline: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: var(--accent-main);
             cursor: pointer;
         }
 
         .btn {
-            background: #f9f9f9;
+            background: transparent;
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 0.6rem 1.2rem;
+            padding: 0.4rem 0.8rem;
             font-family: var(--font-main);
             font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: #f1f1f1;
-            border-color: #999;
         }
 
         /* Canvas Areas */
@@ -169,15 +163,13 @@
         }
 
         .canvas-label {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid var(--border-color);
-            padding: 0.25rem 0.5rem;
-            pointer-events: none;
+            position: relative;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            background: transparent;
+            border: none;
+            padding: 0 0 0.5rem 0;
+            font-weight: bold;
         }
 
         /* Evaluation Panel */
@@ -231,42 +223,44 @@
         }
 
         .badge-true {
-            background: #ffffff;
+            background: transparent;
             color: var(--accent-green);
-            border: 1px solid var(--accent-green);
-            padding: 0.1rem 0.4rem;
+            border: none;
+            padding: 0;
             font-family: var(--font-main);
-            font-size: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: bold;
         }
 
         .badge-false {
-            background: #ffffff;
-            color: var(--accent-red);
-            border: 1px solid var(--accent-red);
-            padding: 0.1rem 0.4rem;
+            background: transparent;
+            color: var(--accent-green);
+            border: none;
+            padding: 0;
             font-family: var(--font-main);
-            font-size: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: bold;
         }
 
         /* Status Banner */
         .status-banner {
             margin-top: 1rem;
-            padding: 1rem;
-            text-align: center;
+            padding: 1rem 0;
+            text-align: left;
             font-size: 1.1rem;
-            transition: all 0.2s ease;
+            font-weight: bold;
+            border: none;
+            border-top: 2px solid var(--border-color);
         }
 
         .status-intact {
-            background: #ffffff;
+            background: transparent;
             color: var(--accent-green);
-            border: 2px solid var(--accent-green);
         }
 
         .status-broken {
-            background: #ffffff;
-            color: var(--accent-red);
-            border: 2px solid var(--accent-red);
+            background: transparent;
+            color: var(--accent-green);
         }
     </style>
 </head>
@@ -330,19 +324,19 @@
                     <div class="eval-box-title">Computed Parameters</div>
                     <div class="metric-line">
                         <span>Target rank \(k = \lceil(1-\alpha)(n+1)\rceil\)</span>
-                        <span id="metric-k" style="color: var(--accent-main)">-</span>
+                        <span id="metric-k" style="color: var(--accent-green)">-</span>
                     </div>
                     <div class="metric-line">
                         <span>Threshold \(R_{(k)}\)</span>
-                        <span id="metric-rk" style="color: var(--accent-main)">-</span>
+                        <span id="metric-rk" style="color: var(--accent-green)">-</span>
                     </div>
                     <div class="metric-line">
                         <span>Target probability \(p = k/n\)</span>
-                        <span id="metric-p" style="color: var(--accent-main)">-</span>
+                        <span id="metric-p" style="color: var(--accent-green)">-</span>
                     </div>
                     <div class="metric-line">
                         <span>Indicator fraction \(\frac{1}{n} \sum_{i=1}^n \mathbb{I}(R_i < V)\)</span>
-                        <span id="metric-frac" style="color: var(--accent-main)">-</span>
+                        <span id="metric-frac" style="color: var(--accent-green)">-</span>
                     </div>
                 </div>
 
@@ -554,7 +548,7 @@
             ctxEcdf.setLineDash([]);
 
             // Draw Scanner line (V score)
-            ctxEcdf.strokeStyle = '#2ca02c'; // Matplotlib green
+            ctxEcdf.strokeStyle = '#3e5c46'; // Academic Sage Green
             ctxEcdf.lineWidth = 2;
             ctxEcdf.beginPath();
             ctxEcdf.moveTo(xToPixel(v_score, wE, maxX), yToPixel(1.1, hE));
@@ -576,7 +570,7 @@
             ctxScan.stroke();
             
             // Scanner tracking line
-            ctxScan.strokeStyle = '#2ca02c';
+            ctxScan.strokeStyle = '#3e5c46'; // Academic Sage Green
             ctxScan.lineWidth = 2;
             ctxScan.beginPath();
             ctxScan.moveTo(xToPixel(v_score, wS, maxX), 0);
@@ -614,7 +608,7 @@
             function setBadge(el, lineEl, val) {
                 el.innerText = val ? "TRUE" : "FALSE";
                 el.className = val ? "badge-true" : "badge-false";
-                lineEl.style.borderLeftColor = val ? "#2ca02c" : "#d62728";
+                lineEl.style.borderLeftColor = "var(--accent-green)";
             }
 
             setBadge(pred1, pred1Line, eq1);
