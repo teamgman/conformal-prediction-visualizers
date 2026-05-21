@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conformal Prediction Visualizers</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #0a0e17;
+            --bg-card: #111827;
+            --bg-raised: #1f2937;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            --accent-cyan: #22d3ee;
+            --accent-indigo: #818cf8;
+            --border-color: #334155;
+            
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            padding: 4rem 2rem;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .visualizer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: border-color 0.2s, transform 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .card-arrow {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .card:hover .card-arrow {
+            color: var(--accent-cyan);
+            transform: translateX(4px);
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 0.75rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        .tag {
+            background: var(--bg-raised);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .tag-active {
+            border-color: rgba(34, 211, 238, 0.3);
+            color: var(--accent-cyan);
+        }
+
+        footer {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--text-muted);
+        }
+
+        footer a:hover {
+            color: var(--text-main);
+            border-bottom-color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Conformal Prediction Visualizers</h1>
+            <p class="subtitle">Interactive simulations exploring the mathematical foundations and guarantees of split conformal prediction.</p>
+        </header>
+
+        <main class="visualizer-list">
+            
+            <!-- Visualizer 1 -->
+            <a href="bijection_visualizer.html" class="card">
+                <div class="card-header">
+                    <div class="card-title">Formulation Equivalence</div>
+                    <div class="card-arrow">→</div>
+                </div>
+                <p class="card-desc">An interactive proof demonstrating the exact mathematical identity of the three prediction set criteria: the Order Statistic, the Empirical Quantile, and the Empirical Counting formulations.</p>
+                <div class="card-meta">
+                    <span class="tag tag-active">Interactive Dashboard</span>
+                    <span class="tag">MathJax</span>
+                    <span class="tag">HTML5 Canvas</span>
+                </div>
+            </a>
+
+            <!-- Visualizer 2 -->
+            <a href="1d_explainer.html" class="card">
+                <div class="card-header">
+                    <div class="card-title">Marginal vs. Conditional Coverage</div>
+                    <div class="card-arrow">→</div>
+                </div>
+                <p class="card-desc">A 1-D visual explainer analyzing the mechanics of marginal coverage guarantees and exploring why exact conditional coverage is mathematically impossible in finite samples without assumptions.</p>
+                <div class="card-meta">
+                    <span class="tag tag-active">Interactive Explainer</span>
+                    <span class="tag">Distribution Simulator</span>
+                </div>
+            </a>
+
+        </main>
+
+        <footer>
+            <p>Hosted on <a href="https://github.com/teamgman/conformal-prediction-visualizers">GitHub</a></p>
+        </footer>
+    </div>
+
+</body>
+</html>
